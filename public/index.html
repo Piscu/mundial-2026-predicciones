@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mundial 2026 - Predicciones</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1 class="logo">⚽ Mundial 2026</h1>
+      <p class="subtitle">Resultados, Predicciones y Cuotas</p>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <div class="container">
+      <button class="tab active" data-tab="fixtures">Partidos</button>
+      <button class="tab" data-tab="standings">Grupos</button>
+      <button class="tab" data-tab="predictions">Predicciones</button>
+      <button class="tab" data-tab="odds">Cuotas</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="tab-content active" id="tab-fixtures">
+      <div class="filters">
+        <button class="filter-btn active" data-status="all">Todos</button>
+        <button class="filter-btn" data-status="NS">Programados</button>
+        <button class="filter-btn" data-status="live">En Vivo</button>
+        <button class="filter-btn" data-status="FT">Finalizados</button>
+      </div>
+      <div id="fixtures-list" class="matches-list"></div>
+    </div>
+
+    <div class="tab-content" id="tab-standings">
+      <div id="standings-view"></div>
+    </div>
+
+    <div class="tab-content" id="tab-predictions">
+      <div class="tab-header">
+        <p class="section-desc">Análisis y predicciones para cada partido del Mundial</p>
+        <button class="btn btn-refresh" data-tab="predictions">🔄 Actualizar</button>
+      </div>
+      <div id="predictions-list" class="matches-list"></div>
+    </div>
+
+    <div class="tab-content" id="tab-odds">
+      <div class="tab-header">
+        <p class="section-desc">Cuotas de apuestas para los partidos del Mundial</p>
+        <button class="btn btn-refresh" data-tab="odds">🔄 Actualizar</button>
+      </div>
+      <div id="odds-list" class="matches-list"></div>
+    </div>
+  </main>
+
+  <div id="match-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <p>Datos proporcionados por <a href="https://api-sports.io" target="_blank">API-Football</a></p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
