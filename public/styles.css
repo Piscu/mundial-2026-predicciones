@@ -689,21 +689,22 @@ body {
 }
 
 .btn-sugerencia {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
   padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.85rem;
+  font-weight: 600;
   font-family: inherit;
   white-space: nowrap;
   transition: all 0.2s;
 }
 
 .btn-sugerencia:hover {
-  border-color: var(--accent);
-  background: var(--surface);
+  background: #4a90e0;
+  border-color: #4a90e0;
 }
 
 .modal-sugerencia {
