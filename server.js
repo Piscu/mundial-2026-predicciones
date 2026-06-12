@@ -3,9 +3,11 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 
+require('dotenv').config();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
-const API_KEY = '465fd60b89a831a391066de7add0c670';
+const API_KEY = process.env.API_FOOTBALL_KEY || '465fd60b89a831a391066de7add0c670';
 const API_BASE = 'https://v3.football.api-sports.io';
 
 // TTL-based cache: key -> { data, expiresAt }
