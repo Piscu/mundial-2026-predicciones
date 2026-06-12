@@ -238,6 +238,36 @@ app.get('/api/standings', async (req, res) => {
   }
 });
 
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
+app.post('/api/sugerencia', express.json(), async (req, res) => {
+  try {
+    const { mensaje, contacto } = req.body;
+    if (!mensaje || mensaje.trim().length < 3) {
+      return res.status(400).json({ error: 'Escribe una sugerencia (mín 3 caracteres)' });
+    }
+    if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) {
+      return res.status(500).json({ error: 'Telegram no configurado' });
+    }
+    const text = `💡 *Nueva Sugerencia*\n\n${mensaje}${contacto ? `\n\n📬 *Contacto:* ${contacto}` : ''}\n\n📍 App Predicciones WA`;
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+    const tgRes = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: Number(TELEGRAM_CHAT_ID), text, parse_mode: 'Markdown' })
+    });
+    if (!tgRes.ok) {
+      const errText = await tgRes.text();
+      throw new Error(`Telegram error: ${errText}`);
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Sugerencia error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

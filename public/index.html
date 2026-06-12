@@ -63,6 +63,24 @@
     </div>
   </div>
 
+  <button class="sugerencia-fab" id="btn-sugerencia" title="Enviar sugerencia">💡</button>
+
+  <div id="sugerencia-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content modal-sugerencia">
+      <button class="modal-close">&times;</button>
+      <h3>💡 Sugerencia</h3>
+      <p style="color:var(--text2);font-size:0.9rem;margin-bottom:12px">¿Qué te gustaría mejorar o agregar?</p>
+      <textarea id="sugerencia-text" class="sugerencia-input" rows="4" placeholder="Escribí tu sugerencia..." maxlength="1000"></textarea>
+      <input id="sugerencia-contacto" class="sugerencia-input" type="text" placeholder="Tu contacto (opcional)" maxlength="100">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary" id="btn-enviar-sugerencia" style="flex:1">Enviar</button>
+        <button class="btn btn-cancel" id="btn-cancelar-sugerencia">Cancelar</button>
+      </div>
+      <div id="sugerencia-status" style="margin-top:8px;font-size:0.85rem;text-align:center"></div>
+    </div>
+  </div>
+
   <footer class="footer">
     <div class="container">
       <p>Datos proporcionados por <a href="https://api-sports.io" target="_blank">API-Football</a></p>

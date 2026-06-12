@@ -681,6 +681,70 @@ body {
   text-align: center;
 }
 
+.sugerencia-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  z-index: 100;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sugerencia-fab:hover {
+  transform: scale(1.1);
+}
+
+.modal-sugerencia {
+  max-width: 420px;
+}
+
+.sugerencia-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  margin-bottom: 8px;
+  resize: vertical;
+}
+
+.sugerencia-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.btn-cancel:hover {
+  border-color: var(--text2);
+  color: var(--text);
+}
+
 .footer {
   text-align: center;
   padding: 20px 0;
