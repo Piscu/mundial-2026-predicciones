@@ -686,7 +686,7 @@ async function enviarSugerencia() {
 
 // Event delegation for dynamic content
 document.addEventListener('click', (e) => {
-  const sugerenciaFab = e.target.closest('#btn-sugerencia');
+  const sugerenciaFab = e.target.closest('#btn-sugerencia') || e.target.closest('#btn-sugerencia-footer');
   if (sugerenciaFab) {
     $('#sugerencia-modal').classList.remove('hidden');
     $('#sugerencia-text').focus();
