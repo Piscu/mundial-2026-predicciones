@@ -10,6 +10,10 @@ const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.API_FOOTBALL_KEY || '465fd60b89a831a391066de7add0c670';
 const API_BASE = 'https://v3.football.api-sports.io';
 
+const db = require('./db');
+const eloRatings = require('./elo_ratings');
+const predictor = require('./predictor');
+
 // TTL-based cache: key -> { data, expiresAt }
 const cache = new Map();
 const TTL = {
@@ -268,10 +272,91 @@ app.post('/api/sugerencia', express.json(), async (req, res) => {
   }
 });
 
+// Advanced prediction endpoints
+app.get('/api/predictions-advanced', async (req, res) => {
+  try {
+    const { fixture, home, away } = req.query;
+    if (fixture) {
+      const pred = await predictor.getPredictionForFixture(Number(fixture));
+      if (pred) return res.json({ cached: true, prediction: pred });
+      return res.json({ cached: false, prediction: null, message: 'Predicción no disponible. Usá POST /api/refresh-data para generar.' });
+    }
+    if (home && away) {
+      const homeTeam = db.getTeamByApiId(Number(home));
+      const awayTeam = db.getTeamByApiId(Number(away));
+      if (!homeTeam || !awayTeam) return res.status(404).json({ error: 'Team not found' });
+      const fixtureId = Math.abs(((Number(home) * 1000 + Number(away)) * 1000 + 20260614)) >>> 0;
+      const existing = await predictor.getPredictionForFixture(fixtureId);
+      if (existing) return res.json({ cached: true, prediction: existing });
+      const pred = await predictor.generatePredictionFromIds(Number(home), Number(away));
+      return res.json({ cached: false, prediction: pred });
+    }
+    return res.status(400).json({ error: 'Provide fixture, home+away, or all' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/teams-list', async (req, res) => {
+  try {
+    const teams = db.getAllTeams().map(t => ({ api_id: t.api_id, name: t.name, code: t.code, elo_rating: t.elo_rating }));
+    res.json({ teams });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/predictions-all', async (req, res) => {
+  try {
+    const rows = [];
+    const stmt = db.getDb().prepare('SELECT * FROM predictions ORDER BY confidence DESC');
+    while (stmt.step()) rows.push(stmt.getAsObject());
+    stmt.free();
+    res.json({ predictions: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/refresh-data', async (req, res) => {
+  try {
+    const secret = req.query.secret;
+    if (secret !== 'refresh2026') return res.status(403).json({ error: 'Invalid secret' });
+
+    const eloData = await eloRatings.fetchEloRatings();
+    let seeded = 0;
+    for (const entry of eloData) {
+      const apiId = eloRatings.CODE_TO_API_ID[entry.code];
+      if (apiId) {
+        db.upsertTeam({ api_id: apiId, name: eloRatings.getCountryName(entry.code), code: entry.code, elo_rating: entry.elo });
+        seeded++;
+      }
+    }
+    // Refresh predictions if API-Football is available
+    let predCount = 0;
+    try {
+      const fixturesData = await fetchFromApi('/fixtures', { date: '2026-06-14' });
+      const wcFixtures = (fixturesData.response || []).filter(f => f.league && f.league.id === 1);
+      if (wcFixtures.length > 0) {
+        await predictor.refreshAllPredictions(wcFixtures);
+        predCount = db.countPredictions();
+      }
+    } catch (fixturesErr) {
+      console.warn('API-Football unavailable for fixtures, Elo seeded only:', fixturesErr.message);
+    }
+    const teamCount = db.getAllTeams().length;
+    const matchCount = db.countMatches();
+    res.json({ ok: true, elo_seeded: seeded, total_teams: teamCount, total_matches: matchCount, total_predictions: predCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  await db.initDb();
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });

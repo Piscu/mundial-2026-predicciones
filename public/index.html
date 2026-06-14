@@ -23,6 +23,7 @@
       <button class="tab" data-tab="standings">Grupos</button>
       <button class="tab" data-tab="predictions">Predicciones</button>
       <button class="tab" data-tab="odds">Cuotas</button>
+      <button class="tab" data-tab="advanced">🔬 Predicción</button>
     </div>
   </nav>
 
@@ -47,6 +48,22 @@
         <button class="btn btn-refresh" data-tab="predictions">🔄 Actualizar</button>
       </div>
       <div id="predictions-list" class="matches-list"></div>
+    </div>
+
+    <div class="tab-content" id="tab-advanced">
+      <div class="tab-header">
+        <p class="section-desc">Predicción mejorada con rating Elo y estadísticas</p>
+        <button class="btn btn-refresh" data-tab="advanced" id="btn-refresh-advanced">🔄 Actualizar</button>
+        <button class="btn btn-refresh" id="btn-sync-elo" style="border-color:var(--accent);color:var(--accent)">⭐ Sincronizar Elo</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <select id="sel-home-team" style="flex:1;min-width:140px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"></select>
+        <span style="font-weight:700;color:var(--text2)">vs</span>
+        <select id="sel-away-team" style="flex:1;min-width:140px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"></select>
+        <button class="btn btn-primary" id="btn-predict-matchup" style="padding:8px 16px">Predecir</button>
+      </div>
+      <div id="matchup-result" style="margin-bottom:16px"></div>
+      <div id="advanced-list" class="matches-list"></div>
     </div>
 
     <div class="tab-content" id="tab-odds">

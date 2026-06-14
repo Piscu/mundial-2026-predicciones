@@ -631,6 +631,178 @@ function renderOddsDetail(odds) {
   container.innerHTML = html;
 }
 
+async function loadAdvancedPredictions() {
+  const container = $('#advanced-list');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando predicciones...</p></div>';
+  try {
+    // Populate team selectors
+    populateTeamSelects();
+
+    // Load pre-computed predictions from DB first
+    const resp = await fetch('/api/predictions-all');
+    const data = await resp.json();
+    if (data.predictions && data.predictions.length > 0) {
+      container.innerHTML = '';
+      data.predictions.slice(0, 30).forEach(pred => {
+        container.appendChild(createSimpleAdvancedCard(pred));
+      });
+    } else {
+      container.innerHTML = '<div class="error-msg">No hay predicciones. Usá "⭐ Sincronizar Elo" para generarlas.</div>';
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="error-msg">Error: ${err.message}</div>`;
+  }
+}
+
+function populateTeamSelects() {
+  const homeSel = $('#sel-home-team');
+  const awaySel = $('#sel-away-team');
+  if (!homeSel || homeSel.options.length > 1) return;
+  const teams = []; // We'll populate from DB via fetch
+  fetch('/api/teams-list').then(r => r.json()).then(data => {
+    const teams = data.teams || [];
+    homeSel.innerHTML = '<option value="">Seleccioná equipo local</option>' + teams.map(t => `<option value="${t.api_id}">${t.name} (Elo: ${t.elo_rating})</option>`).join('');
+    awaySel.innerHTML = '<option value="">Seleccioná equipo visitante</option>' + teams.map(t => `<option value="${t.api_id}">${t.name} (Elo: ${t.elo_rating})</option>`).join('');
+  }).catch(() => {});
+}
+
+function createSimpleAdvancedCard(pred) {
+  const card = document.createElement('div');
+  card.className = 'match-card';
+  card.innerHTML = `
+    <div class="match-header">
+      <span style="color:var(--text2);font-size:0.8rem">⭐ Elo: ${pred.elo_home || '?'} vs ${pred.elo_away || '?'}</span>
+      <span style="color:var(--text2);font-size:0.8rem">🎯 ${pred.confidence || 0}% confianza</span>
+    </div>
+    <div class="match-teams">
+      <div class="team home">
+        <span class="team-name" style="font-weight:700;color:var(--accent)">${pred.home_name || pred.home_code || 'Local'}</span>
+      </div>
+      <div class="match-score" style="font-weight:700;font-size:1.1rem">${pred.predicted_score || '?-?'}</div>
+      <div class="team away">
+        <span class="team-name" style="font-weight:700">${pred.away_name || pred.away_code || 'Visitante'}</span>
+      </div>
+    </div>
+    <div class="prediction-bar" style="margin-bottom:4px">
+      <div class="bar-home" style="width:${pred.home_pct}%">${pred.home_pct}%</div>
+      <div class="bar-draw" style="width:${pred.draw_pct}%">${pred.draw_pct}%</div>
+      <div class="bar-away" style="width:${pred.away_pct}%">${pred.away_pct}%</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text2)">
+      <span>📊 ${pred.home_form || '—'}</span>
+      <span>📊 ${pred.away_form || '—'}</span>
+    </div>
+  `;
+  return card;
+}
+
+function createAdvancedCard(fixture, pred) {
+  const { fixture: f, teams, goals, league } = fixture;
+  const card = document.createElement('div');
+  card.className = 'match-card';
+  card.dataset.fixtureId = f.id;
+  card.innerHTML = `
+    <div class="match-header">
+      <span class="match-round">${league.round || ''}</span>
+      <span style="color:var(--text2);font-size:0.8rem">${formatDate(f.date)} ${formatTime(f.date)}</span>
+    </div>
+    <div class="match-teams">
+      <div class="team home">
+        <img class="team-logo" src="${teams.home.logo}" alt="" loading="lazy">
+        <span class="team-name">${teams.home.name}</span>
+      </div>
+      <div class="match-score" style="font-size:0.9rem;font-weight:400;color:var(--text2);min-width:auto">vs</div>
+      <div class="team away">
+        <img class="team-logo" src="${teams.away.logo}" alt="" loading="lazy">
+        <span class="team-name">${teams.away.name}</span>
+      </div>
+    </div>
+    ${pred ? `
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--text2);margin-bottom:8px">
+        <span>⭐ Elo: ${pred.elo_home || '?'} vs ${pred.elo_away || '?'}</span>
+        ${pred.fifa_home ? `<span>🏆 FIFA: #${pred.fifa_home} vs #${pred.fifa_away}</span>` : ''}
+        <span>🎯 ${pred.confidence || 0}% confianza</span>
+      </div>
+      <div class="prediction-bar" style="margin-bottom:6px">
+        <div class="bar-home" style="width:${pred.home_pct}%">${pred.home_pct}%</div>
+        <div class="bar-draw" style="width:${pred.draw_pct}%">${pred.draw_pct}%</div>
+        <div class="bar-away" style="width:${pred.away_pct}%">${pred.away_pct}%</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--text2)">
+        <span>📊 ${pred.home_form || '—'}</span>
+        <span style="font-weight:700;color:var(--accent)">${pred.predicted_score || '?'}</span>
+        <span>📊 ${pred.away_form || '—'}</span>
+      </div>
+    </div>` : `
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);text-align:center;color:var(--text2);font-size:0.8rem">
+      Sin datos. <button class="btn btn-refresh" onclick="syncElo()" style="padding:4px 10px">Sincronizar Elo</button>
+    </div>`}
+    <div class="match-actions" style="margin-top:8px">
+      <span style="flex:1"></span>
+      <button class="btn btn-detail" data-fixture-id="${f.id}">Detalles</button>
+    </div>
+  `;
+  return card;
+}
+
+async function predictMatchup(homeId, awayId) {
+  const resultDiv = $('#matchup-result');
+  resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const resp = await fetch(`/api/predictions-advanced?home=${homeId}&away=${awayId}`);
+    const data = await resp.json();
+    if (data.prediction) {
+      const p = data.prediction;
+      resultDiv.innerHTML = `
+        <div class="match-card" style="border-color:var(--accent)">
+          <div class="match-header">
+            <span style="color:var(--text2);font-size:0.8rem">⭐ Elo: ${p.elo_home} vs ${p.elo_away}</span>
+            <span style="color:var(--text2);font-size:0.8rem">🎯 ${p.confidence}% confianza</span>
+          </div>
+          <div class="match-teams">
+            <div class="team home">
+              <span class="team-name" style="font-weight:700;color:var(--accent)">${p.home_name || p.home_code || 'Local'}</span>
+            </div>
+            <div class="match-score" style="font-weight:700;font-size:1.2rem">${p.predicted_score || '?-?'}</div>
+            <div class="team away">
+              <span class="team-name" style="font-weight:700">${p.away_name || p.away_code || 'Visitante'}</span>
+            </div>
+          </div>
+          <div class="prediction-bar">
+            <div class="bar-home" style="width:${p.home_pct}%">${p.home_pct}%</div>
+            <div class="bar-draw" style="width:${p.draw_pct}%">${p.draw_pct}%</div>
+            <div class="bar-away" style="width:${p.away_pct}%">${p.away_pct}%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--text2);margin-top:8px">
+            <span>📊 ${p.home_form || '—'}</span>
+            <span>📊 ${p.away_form || '—'}</span>
+          </div>
+        </div>`;
+    } else {
+      resultDiv.innerHTML = '<div class="error-msg">No se pudo generar predicción</div>';
+    }
+  } catch (err) {
+    resultDiv.innerHTML = `<div class="error-msg">Error: ${err.message}</div>`;
+  }
+}
+
+async function syncElo() {
+  const btn = $('#btn-sync-elo');
+  if (btn) { btn.disabled = true; btn.textContent = '⭐ Sincronizando...'; }
+  try {
+    const res = await fetch('/api/refresh-data?secret=refresh2026', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      alert(`✅ Elo sincronizado: ${data.elo_seeded} equipos, ${data.total_predictions} predicciones generadas`);
+      loadAdvancedPredictions();
+    } else throw new Error(data.error || 'Error');
+  } catch (err) {
+    alert('❌ Error: ' + err.message);
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '⭐ Sincronizar Elo'; }
+}
+
 async function copyShareText(fixtureId) {
   const fixture = fixturesData.find(f => f.fixture.id === fixtureId);
   if (!fixture) return;
@@ -711,13 +883,26 @@ document.addEventListener('click', (e) => {
     const tab = refreshBtn.dataset.tab;
     refreshBtn.disabled = true;
     refreshBtn.textContent = '🔄 Actualizando...';
-    (tab === 'predictions' ? loadPredictions(true) : loadOdds(true)).then(() => {
+    const reloadFn = tab === 'predictions' ? loadPredictions(true) : tab === 'advanced' ? loadAdvancedPredictions() : loadOdds(true);
+    Promise.resolve(reloadFn).then(() => {
       refreshBtn.disabled = false;
       refreshBtn.textContent = '🔄 Actualizar';
     }).catch(() => {
       refreshBtn.disabled = false;
       refreshBtn.textContent = '🔄 Actualizar';
     });
+    return;
+  }
+
+  const syncBtn = e.target.closest('#btn-sync-elo');
+  if (syncBtn) { syncElo(); return; }
+
+  const predictBtn = e.target.closest('#btn-predict-matchup');
+  if (predictBtn) {
+    const homeId = $('#sel-home-team').value;
+    const awayId = $('#sel-away-team').value;
+    if (!homeId || !awayId) { alert('Seleccioná ambos equipos'); return; }
+    predictMatchup(homeId, awayId);
     return;
   }
 
@@ -747,6 +932,7 @@ document.addEventListener('click', (e) => {
       case 'standings': loadStandings(); break;
       case 'predictions': loadPredictions(); break;
       case 'odds': loadOdds(); break;
+      case 'advanced': loadAdvancedPredictions(); break;
     }
     return;
   }
